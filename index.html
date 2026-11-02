@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CleanSearch Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .tile-hover {
+      transition: all 0.2s ease-in-out;
+    }
+    .tile-hover:hover {
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col justify-between transition-colors duration-200">
+
+  <!-- Header Navigation -->
+  <header class="w-full max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="bg-blue-600 text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+        <i class="fa-solid font-bold fa-magnifying-glass text-lg"></i>
+      </div>
+      <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
+        CleanSearch
+      </span>
+    </div>
+
+    <!-- Right Controls: Adblock Indicator & Theme Toggle -->
+    <div class="flex items-center gap-3">
+      <!-- Shield / Privacy Shield Widget -->
+      <div id="shieldContainer" class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full shadow-sm text-xs font-medium cursor-pointer transition" onclick="toggleShield()">
+        <span class="relative flex h-2.5 w-2.5">
+          <span id="shieldPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span id="shieldDot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <i id="shieldIcon" class="fa-solid fa-shield-halved text-emerald-500"></i>
+        <span id="shieldText" class="hidden sm:inline">AdBlock Active</span>
+        <span id="blockedCount" class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] px-1.5 py-0.5 rounded-full font-bold">148</span>
+      </div>
+
+      <!-- Theme Switcher -->
+      <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+        <i id="themeIcon" class="fa-solid fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Search & Tiles Container -->
+  <main class="w-full max-w-4xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center items-center">
+    
+    <!-- Title / Logo Area -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-2">
+        What are you looking for?
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
+        Fast, clean, and direct access to the web.
+      </p>
+    </div>
+
+    <!-- Search Form -->
+    <form id="searchForm" onsubmit="handleSearch(event)" class="w-full max-w-2xl mb-8">
+      <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200/80 dark:border-gray-700/80 p-2 flex items-center gap-2 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+        
+        <!-- Engine Selector Dropdown -->
+        <div class="relative group">
+          <button type="button" id="engineSelectBtn" onclick="toggleEngineDropdown()" class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-xs font-semibold px-3 py-2 rounded-xl transition text-gray-700 dark:text-gray-200">
+            <i id="currentEngineIcon" class="fa-brands fa-google text-blue-500"></i>
+            <span id="currentEngineLabel">Google</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+          </button>
+
+          <!-- Dropdown Options -->
+          <div id="engineDropdown" class="hidden absolute left-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1.5 z-50">
+            <button type="button" onclick="selectEngine('google', 'Google', 'fa-brands fa-google text-blue-500')" class="w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i class="fa-brands fa-google text-blue-500 w-4"></i> Google
+            </button>
+            <button type="button" onclick="selectEngine('duckduckgo', 'DuckDuckGo', 'fa-solid fa-shield-cat text-orange-500')" class="w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i class="fa-solid fa-shield-cat text-orange-500 w-4"></i> DuckDuckGo
+            </button>
+            <button type="button" onclick="selectEngine('bing', 'Bing', 'fa-brands fa-microsoft text-cyan-500')" class="w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i class="fa-brands fa-microsoft text-cyan-500 w-4"></i> Bing
+            </button>
+            <button type="button" onclick="selectEngine('wikipedia', 'Wikipedia', 'fa-brands fa-wikipedia-w text-gray-600 dark:text-gray-300')" class="w-full px-3 py-2 text-left text-xs flex items-center gap-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i class="fa-brands fa-wikipedia-w text-gray-600 dark:text-gray-300 w-4"></i> Wikipedia
+            </button>
+          </div>
+        </div>
+
+        <!-- Text Input -->
+        <input 
+          type="text" 
+          id="searchInput"
+          placeholder="Search the web or type a URL..." 
+          class="w-full bg-transparent border-none text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg px-2 py-1"
+          autocomplete="off"
+          autofocus
+        />
+
+        <!-- Action Buttons -->
+        <button 
+          type="submit" 
+          class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition flex items-center justify-center shrink-0"
+        >
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </form>
+
+    <!-- Quick Access Bookmarks / Tiles -->
+    <div class="w-full max-w-2xl">
+      <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Access</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        
+        <a href="https://www.youtube.com" target="_blank" class="tile-hover flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 rounded-xl shadow-sm hover:shadow-md">
+          <div class="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center font-bold text-lg">
+            <i class="fa-brands fa-youtube"></i>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-sm font-semibold truncate">YouTube</div>
+            <div class="text-[11px] text-gray-400 truncate">Videos & Music</div>
+          </div>
+        </a>
+
+        <a href="https://www.wikipedia.org" target="_blank" class="tile-hover flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 rounded-xl shadow-sm hover:shadow-md">
+          <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 flex items-center justify-center font-bold text-lg">
+            <i class="fa-brands fa-wikipedia-w"></i>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-sm font-semibold truncate">Wikipedia</div>
+            <div class="text-[11px] text-gray-400 truncate">Encyclopedia</div>
+          </div>
+        </a>
+
+        <a href="https://github.com" target="_blank" class="tile-hover flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 rounded-xl shadow-sm hover:shadow-md">
+          <div class="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-lg">
+            <i class="fa-brands fa-github"></i>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-sm font-semibold truncate">GitHub</div>
+            <div class="text-[11px] text-gray-400 truncate">Development</div>
+          </div>
+        </a>
+
+        <a href="https://stackoverflow.com" target="_blank" class="tile-hover flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 rounded-xl shadow-sm hover:shadow-md">
+          <div class="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-lg">
+            <i class="fa-brands fa-stack-overflow"></i>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-sm font-semibold truncate">Stack Overflow</div>
+            <div class="text-[11px] text-gray-400 truncate">Q&A for Devs</div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Stats & Info -->
+  <footer class="w-full max-w-7xl mx-auto px-4 py-4 border-t border-gray-200/60 dark:border-gray-800 text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div class="flex items-center gap-4">
+      <span><i class="fa-solid fa-lock text-emerald-500 mr-1"></i> Direct Redirect active</span>
+      <span>•</span>
+      <span id="sessionCounter">Session Searches: 0</span>
+    </div>
+    <div>
+      <span>Clean Search Dashboard &copy; 2026</span>
+    </div>
+  </footer>
+
+  <!-- Inline Script Logic -->
+  <script>
+    // Selected Engine State
+    let selectedEngine = 'google';
+    let isShieldActive = true;
+    let searchCount = 0;
+    let blockedTrackerCount = 148;
+
+    // Search Engine URL Templates
+    const engineUrls = {
+      google: 'https://www.google.com/search?q=',
+      duckduckgo: 'https://duckduckgo.com/?q=',
+      bing: 'https://www.bing.com/search?q=',
+      wikipedia: 'https://en.wikipedia.org/w/index.php?search='
+    };
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      const icon = document.getElementById('themeIcon');
+      if (isDark) {
+        icon.className = 'fa-solid fa-sun text-yellow-400';
+      } else {
+        icon.className = 'fa-solid fa-moon';
+      }
+    }
+
+    // Engine Dropdown Handlers
+    function toggleEngineDropdown() {
+      const dropdown = document.getElementById('engineDropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    function selectEngine(id, label, iconClass) {
+      selectedEngine = id;
+      document.getElementById('currentEngineLabel').innerText = label;
+      document.getElementById('currentEngineIcon').className = iconClass;
+      document.getElementById('engineDropdown').classList.add('hidden');
+    }
+
+    // Close dropdown on clicking outside
+    window.addEventListener('click', function(e) {
+      const btn = document.getElementById('engineSelectBtn');
+      const dropdown = document.getElementById('engineDropdown');
+      if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Handle Form Submit
+    function handleSearch(event) {
+      event.preventDefault();
+      const input = document.getElementById('searchInput');
+      const query = input.value.trim();
+
+      if (!query) return;
+
+      // Update local search stats
+      searchCount++;
+      document.getElementById('sessionCounter').innerText = `Session Searches: ${searchCount}`;
+
+      // Simulate blocked trackers increment on search
+      if (isShieldActive) {
+        blockedTrackerCount += Math.floor(Math.random() * 3) + 1;
+        document.getElementById('blockedCount').innerText = blockedTrackerCount;
+      }
+
+      // Check if user entered a full URL directly
+      if (/^https?:\/\//i.test(query)) {
+        window.open(query, '_blank');
+      } else if (/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/i.test(query)) {
+        window.open('https://' + query, '_blank');
+      } else {
+        // Open search query in selected engine
+        const searchUrl = engineUrls[selectedEngine] + encodeURIComponent(query);
+        window.open(searchUrl, '_blank');
+      }
+
+      input.value = '';
+    }
+
+    // AdBlock / Privacy Shield Switch Simulator
+    function toggleShield() {
+      isShieldActive = !isShieldActive;
+      const shieldText = document.getElementById('shieldText');
+      const shieldIcon = document.getElementById('shieldIcon');
+      const shieldPing = document.getElementById('shieldPing');
+      const shieldDot = document.getElementById('shieldDot');
+      const blockedCount = document.getElementById('blockedCount');
+
+      if (isShieldActive) {
+        shieldText.innerText = 'AdBlock Active';
+        shieldIcon.className = 'fa-solid fa-shield-halved text-emerald-500';
+        shieldPing.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
+        shieldDot.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500';
+        blockedCount.className = 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] px-1.5 py-0.5 rounded-full font-bold';
+      } else {
+        shieldText.innerText = 'AdBlock Paused';
+        shieldIcon.className = 'fa-solid fa-shield-cat text-gray-400';
+        shieldPing.className = 'hidden';
+        shieldDot.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-400';
+        blockedCount.className = 'bg-gray-100 dark:bg-gray-700 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full font-bold';
+      }
+    }
+  </script>
+</body>
+</html>
